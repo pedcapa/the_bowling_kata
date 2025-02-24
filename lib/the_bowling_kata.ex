@@ -1,5 +1,7 @@
 defmodule TheBowlingKata do
-  def score(_game) do
-    0
+  def score([]), do: 0
+  def score([frame | rest]) do
+    [first, second | _] = frame
+    first + second + score(rest)
   end
 end
