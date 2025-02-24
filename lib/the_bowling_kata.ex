@@ -1,39 +1,36 @@
 defmodule TheBowlingKata do
-  def score([]), do: 0
-
-  def score([frame | rest]) do
-    case frame do
-      [10, nil] ->
-        bonus = strike_bonus(rest)
-        10 + bonus + score(rest)
-      [first, second | _] ->
-        if first + second == 10 do
-          bonus = get_first_roll(rest)
-          first + second + bonus + score(rest)
-        else
-          first + second + score(rest)
-        end
-    end
+  def score(game) do
+    score(game, 1)
   end
 
-  defp strike_bonus(rest) do
+  defp score([], _frame_num), do: 0
+
+  defp score([frame | _], 10) do
+    frame |> Enum.filter(&(&1 != nil)) |> Enum.sum()
+  end
+
+  defp score([frame | rest], frame_num) when frame_num < 10 do
     cond do
-      rest == [] -> 0
+      strike?(frame) ->
+        10 + Enum.sum(next_rolls(rest, 2)) + score(rest, frame_num + 1)
+      spare?(frame) ->
+        10 + (hd(next_rolls(rest, 1)) || 0) + score(rest, frame_num + 1)
       true ->
-        [first | tail] = hd(rest)
-        second =
-          if length(tail) > 0 do
-            hd(tail)
-          else
-            get_first_roll(tl(rest))
-          end
-        first + second
+        (frame |> Enum.filter(&(&1 != nil)) |> Enum.sum()) + score(rest, frame_num + 1)
     end
   end
 
-  defp get_first_roll([]), do: 0
-  defp get_first_roll([next_frame | _]) do
-    [first | _] = next_frame
-    first
+  defp strike?([10, _]), do: true
+  defp strike?(_), do: false
+
+  defp spare?([first, second]) when first + second == 10, do: true
+  defp spare?(_), do: false
+
+  defp next_rolls(rest, n) do
+    rest
+    |> Enum.flat_map(fn frame ->
+      Enum.filter(frame, &(&1 != nil))
+    end)
+    |> Enum.take(n)
   end
 end
